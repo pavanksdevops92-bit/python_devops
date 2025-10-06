@@ -1,4 +1,7 @@
 from fastapi.testclient import TestClient
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 from main import app
 
 client = TestClient(app)
@@ -10,8 +13,8 @@ def test_add():
     assert response.json() == {"result": 8}
 
 
-def test_subtract():
-    response = client.get("/subtract?a=10&b=4")
+def test_substract():
+    response = client.get("/substract?a=10&b=4")
     assert response.status_code == 200
     assert response.json() == {"result": 6}
 
