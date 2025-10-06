@@ -36,15 +36,19 @@ pipeline {
                 sh "echo 'Hello Everyone'"
             }
         }
-        stage('Setup Python Environment') {
+        
+        stage('Setup Python Virtual Environment') {
             steps {
                 sh '''
                     python3 --version
-                    pip3 install --upgrade pip
-                    pip3 install -r requirements.txt
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    python -m pip install --upgrade pip
+                    pip install -r requirements.txt
                 '''
             }
-       }
+        }
+
         stage('Clean Dependency-Check Cache') {
             steps {
                 sh 'rm -rf ~/.dependency-check/data || true'
@@ -66,12 +70,18 @@ pipeline {
             parallel{
                 stage('unit testing'){
                     steps{
-                        sh "pytest tests/test.py -v"
+                        sh '''
+                            . venv/bin/activate
+                            pytest tests/test.py -v
+                        '''
                     }
                 }
                 stage('Code Coverage'){
                     steps{
-                        sh "pytest tests/test.py --cov=src --cov-report=html --cov-report=xml --cov-report=term-missing"
+                        sh '''
+                            . venv/bin/activate
+                            pytest tests/test.py --cov=src --cov-report=html --cov-report=xml --cov-report=term-missing
+                        '''
                     }
                 }
             }
@@ -117,7 +127,35 @@ pipeline {
 
     post{
         always{
-            sh "docker rmi ${params.DOCKER_IMAGE}"
+            script {
+                // Cleanup Docker image
+                if (env.DOCKER_IMAGE) {
+                    sh "docker rmi ${env.DOCKER_IMAGE} || true"
+                }
+                // Cleanup virtual environment
+                sh "rm -rf venv || true"
+            }
+            
+            // Publish test results
+            junit allowEmptyResults: true, testResults: '/test-results/*.xml'
+            
+            // Publish coverage reports
+            publishHTML([
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'htmlcov',
+                reportFiles: 'index.html',
+                reportName: 'Coverage Report'
+            ])
+        }
+        
+        success {
+            echo "Pipeline completed successfully! Image: ${env.DOCKER_IMAGE}"
+        }
+        
+        failure {
+            echo "Pipeline failed. Please check the logs."
         }
     }
 }
