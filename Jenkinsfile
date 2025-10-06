@@ -36,7 +36,15 @@ pipeline {
                 sh "echo 'Hello Everyone'"
             }
         }
-        
+        stage('Setup Python Environment') {
+            steps {
+                sh '''
+                    python3 --version
+                    pip3 install --upgrade pip
+                    pip3 install -r requirements.txt
+                '''
+            }
+       }
         stage('Clean Dependency-Check Cache') {
             steps {
                 sh 'rm -rf ~/.dependency-check/data || true'
