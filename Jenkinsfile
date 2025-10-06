@@ -41,11 +41,7 @@ pipeline {
             steps {
                 sh '''
                     python3 --version
-                    echo "Installing python3-venv..."
-                    sudo apt-get update
-                    sudo apt-get install -y python3-venv python3-pip
-
-                    
+                                       
                     # Create and activate virtual environment
                     python3 -m venv venv
                     . venv/bin/activate
