@@ -37,10 +37,19 @@ pipeline {
             }
         }
         
-        stage('Setup Python Virtual Environment') {
+      stage('Setup Python Virtual Environment') {
             steps {
                 sh '''
                     python3 --version
+                    
+                    # Install python3-venv if not available
+                    if ! python3 -m venv --help > /dev/null 2>&1; then
+                        echo "Installing python3-venv..."
+                        sudo apt-get update
+                        sudo apt-get install -y python3-venv python3-pip
+                    fi
+                    
+                    # Create and activate virtual environment
                     python3 -m venv venv
                     . venv/bin/activate
                     python -m pip install --upgrade pip
